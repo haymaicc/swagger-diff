@@ -7,6 +7,7 @@ import java.util.Map;
 import com.deepoove.swagger.diff.model.ElProperty;
 
 import io.swagger.models.Model;
+import io.swagger.models.properties.AbstractProperty;
 import io.swagger.models.properties.Property;
 import io.swagger.models.properties.RefProperty;
 
@@ -25,8 +26,7 @@ public class PropertyDiff {
 		changed = new ArrayList<ElProperty>();
 	}
 
-	public static PropertyDiff buildWithDefinition(Map<String, Model> left,
-			Map<String, Model> right) {
+	public static PropertyDiff buildWithDefinition(Map<String, Model> left, Map<String, Model> right) {
 		PropertyDiff diff = new PropertyDiff();
 		diff.oldDedinitions = left;
 		diff.newDedinitions = right;
@@ -37,9 +37,15 @@ public class PropertyDiff {
 		if ((null == left || left instanceof RefProperty) && (null == right || right instanceof RefProperty)) {
 			Model leftModel = null == left ? null : oldDedinitions.get(((RefProperty) left).getSimpleRef());
 			Model rightModel = null == right ? null : newDedinitions.get(((RefProperty) right).getSimpleRef());
-			ModelDiff diff = ModelDiff
-					.buildWithDefinition(oldDedinitions, newDedinitions)
-					.diff(leftModel, rightModel);
+			ModelDiff diff = ModelDiff.buildWithDefinition(oldDedinitions, newDedinitions).diff(leftModel, rightModel);
+			increased.addAll(diff.getIncreased());
+			missing.addAll(diff.getMissing());
+			changed.addAll(diff.getChanged());
+		}
+		else if ((null == left || left instanceof AbstractProperty)
+				&& (null == right || right instanceof AbstractProperty)) {
+			AbstractPropertyDiff diff = new AbstractPropertyDiff(left, right);
+			diff.diff();
 			increased.addAll(diff.getIncreased());
 			missing.addAll(diff.getMissing());
 			changed.addAll(diff.getChanged());

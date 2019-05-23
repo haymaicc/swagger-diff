@@ -1,17 +1,43 @@
 package com.deepoove.swagger.diff.output;
 
-import com.deepoove.swagger.diff.SwaggerDiff;
-import com.deepoove.swagger.diff.model.*;
-import io.swagger.models.HttpMethod;
-import io.swagger.models.parameters.Parameter;
-import io.swagger.models.properties.Property;
-import j2html.tags.ContainerTag;
+import static j2html.TagCreator.a;
+import static j2html.TagCreator.body;
+import static j2html.TagCreator.del;
+import static j2html.TagCreator.div;
+import static j2html.TagCreator.document;
+import static j2html.TagCreator.h1;
+import static j2html.TagCreator.h2;
+import static j2html.TagCreator.h3;
+import static j2html.TagCreator.head;
+import static j2html.TagCreator.header;
+import static j2html.TagCreator.hr;
+import static j2html.TagCreator.html;
+import static j2html.TagCreator.li;
+import static j2html.TagCreator.link;
+import static j2html.TagCreator.meta;
+import static j2html.TagCreator.ol;
+import static j2html.TagCreator.p;
+import static j2html.TagCreator.rawHtml;
+import static j2html.TagCreator.script;
+import static j2html.TagCreator.span;
+import static j2html.TagCreator.title;
+import static j2html.TagCreator.ul;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static j2html.TagCreator.*;
+import com.deepoove.swagger.diff.SwaggerDiff;
+import com.deepoove.swagger.diff.model.ChangedEndpoint;
+import com.deepoove.swagger.diff.model.ChangedOperation;
+import com.deepoove.swagger.diff.model.ChangedParameter;
+import com.deepoove.swagger.diff.model.ElProperty;
+import com.deepoove.swagger.diff.model.Endpoint;
+
+import io.swagger.models.HttpMethod;
+import io.swagger.models.parameters.Parameter;
+import io.swagger.models.properties.Property;
+import j2html.tags.ContainerTag;
 
 public class HtmlRender implements Render {
 
@@ -120,7 +146,11 @@ public class HtmlRender implements Render {
 
                 ContainerTag ul_detail = ul().withClass("detail");
                 if (changedOperation.isDiffParam()) {
-                    ul_detail.with(li().with(h3("Parameter")).with(ul_param(changedOperation)));
+					ContainerTag containerTag = ul_param(changedOperation);
+					if (containerTag.getNumChildren() == 0 && !changedOperation.isDiffProp()) {
+                        continue;
+					}
+					ul_detail.with(li().with(h3("Parameter")).with(containerTag));
                 }
                 if (changedOperation.isDiffProp()) {
                     ul_detail.with(li().with(h3("Return Type")).with(ul_response(changedOperation)));
