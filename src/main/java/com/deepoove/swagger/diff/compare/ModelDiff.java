@@ -12,11 +12,13 @@ import java.util.Set;
 import com.deepoove.swagger.diff.model.ElProperty;
 
 import io.swagger.models.Model;
+import io.swagger.models.properties.ArrayProperty;
 import io.swagger.models.properties.Property;
 import io.swagger.models.properties.RefProperty;
 
 /**
  * compare two model
+ * 
  * @author Sayi
  * @version
  */
@@ -35,8 +37,7 @@ public class ModelDiff {
 		changed = new ArrayList<ElProperty>();
 	}
 
-	public static ModelDiff buildWithDefinition(Map<String, Model> left,
-			Map<String, Model> right) {
+	public static ModelDiff buildWithDefinition(Map<String, Model> left, Map<String, Model> right) {
 		ModelDiff diff = new ModelDiff();
 		diff.oldDedinitions = left;
 		diff.newDedinitions = right;
@@ -71,32 +72,39 @@ public class ModelDiff {
 		sharedKey.stream().forEach((key) -> {
 			Property left = leftProperties.get(key);
 			Property right = rightProperties.get(key);
-
-			if ((left instanceof RefProperty) && (right instanceof RefProperty)) {
-				String leftRef = ((RefProperty) left).getSimpleRef();
-				String rightRef = ((RefProperty) right).getSimpleRef();
-
-				diff(oldDedinitions.get(leftRef), newDedinitions.get(rightRef),
-						buildElString(parentEl, key),
-						copyAndAdd(visited, leftModel, rightModel));
-
-			} else if (left != null && right != null && !left.equals(right)) {
-				// Add a changed ElProperty if not a Reference
-			    // Useless
-				changed.add(convert2ElProperty(key, parentEl, left));
+			if ((left instanceof ArrayProperty) && (right instanceof ArrayProperty)) {
+				handleRefProperty(leftModel, rightModel, parentEl, visited, key, ((ArrayProperty) left).getItems(),
+						((ArrayProperty) right).getItems());
+			} else {
+				handleRefProperty(leftModel, rightModel, parentEl, visited, key, left, right);
 			}
 		});
 		return this;
 	}
 
-	private Collection<? extends ElProperty> convert2ElPropertys(
-			Map<String, Property> propMap, String parentEl) {
+	private void handleRefProperty(Model leftModel, Model rightModel, String parentEl, Set<Model> visited, String key,
+			Property left, Property right) {
+		if ((left instanceof RefProperty) && (right instanceof RefProperty)) {
+			String leftRef = ((RefProperty) left).getSimpleRef();
+			String rightRef = ((RefProperty) right).getSimpleRef();
+
+			diff(oldDedinitions.get(leftRef), newDedinitions.get(rightRef), buildElString(parentEl, key),
+					copyAndAdd(visited, leftModel, rightModel));
+		} else if (left != null && right != null && !left.equals(right)) {
+			// Add a changed ElProperty if not a Reference
+			// Useless
+			changed.add(convert2ElProperty(key, parentEl, left));
+		}
+	}
+
+	private Collection<? extends ElProperty> convert2ElPropertys(Map<String, Property> propMap, String parentEl) {
 
 		List<ElProperty> result = new ArrayList<ElProperty>();
-		if (null == propMap) return result;
+		if (null == propMap)
+			return result;
 
 		for (Entry<String, Property> entry : propMap.entrySet()) {
-		    // TODO Recursively get the properties
+			// TODO Recursively get the properties
 			result.add(convert2ElProperty(entry.getKey(), parentEl, entry.getValue()));
 		}
 		return result;
@@ -114,7 +122,7 @@ public class ModelDiff {
 	}
 
 	@SuppressWarnings("unchecked")
-    private <T> Set<T> copyAndAdd(Set<T> set, T... add) {
+	private <T> Set<T> copyAndAdd(Set<T> set, T... add) {
 		Set<T> newSet = new HashSet<T>(set);
 		newSet.addAll(Arrays.asList(add));
 		return newSet;
